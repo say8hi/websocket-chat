@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #chat-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 300px;
+        }
+        #messages {
+            height: 200px;
+            width: 100%;
+            border: 1px solid #ccc;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #fff;
+        }
+        #message-form {
+            display: flex;
+            width: 100%;
+        }
+        #message-form input {
+            flex: 1;
+            padding: 5px;
+            border: 1px solid #ccc;
+        }
+        #message-form button {
+            padding: 5px 10px;
+            border: none;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        #register-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #register-container input {
+            margin: 5px;
+            padding: 10px;
+            width: 200px;
+        }
+        #register-container button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="register-container">
+        <h2>Register</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button id="register-btn">Register</button>
+    </div>
+
+    <div id="chat-container">
+        <h2>Chat Room</h2>
+        <div id="messages"></div>
+        <form id="message-form">
+            <input type="text" id="message-input" placeholder="Type a message" required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+  <script>
+        const registerBtn = document.getElementById('register-btn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const registerContainer = document.getElementById('register-container');
+        const chatContainer = document.getElementById('chat-container');
+        const messagesDiv = document.getElementById('messages');
+        const messageForm = document.getElementById('message-form');
+        const messageInput = document.getElementById('message-input');
+
+        let username = '';
+
+        registerBtn.addEventListener('click', async () => {
+            const usernameValue = usernameInput.value;
+            const passwordValue = passwordInput.value;
+
+            if (!usernameValue || !passwordValue) {
+                alert("Please enter both username and password.");
+                return;
+            }
+
+            try {
+                const response = await fetch('api/users/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: usernameValue,
+                        password: passwordValue
+                    }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const userId = data.data.user_id;
+
+                    username = usernameValue;
+                    alert('Registration successful!');
+                    registerContainer.style.display = 'none';
+                    chatContainer.style.display = 'flex';
+                } else {
+                    alert('Registration failed.');
+                }
+            } catch (error) {
+                console.error('Error during registration:', error);
+                alert('Error during registration.');
+            }
+        });
+    </script>
+</body>
+</html>
