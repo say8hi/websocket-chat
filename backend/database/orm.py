@@ -1,10 +1,10 @@
 from typing import Generic, List, Type, TypeVar
 from sqlalchemy import desc, select
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import joinedload, sessionmaker
 from sqlalchemy.exc import NoResultFound
 from database.database import Base
 
-from database.models import User
+from database.models import User, Message
 
 T = TypeVar("T", bound=Base)
 
@@ -70,9 +70,37 @@ class UsersRepo(CRUD[User]):
     def __init__(self, session):
         super().__init__(User, session)
 
-    async def get_filter_by(self, **kwargs):
+    async def get_filter_by(self, **kwargs) -> List[User]:
         async with self.session_factory() as session:
             query = select(self.model).filter_by(**kwargs)
+            result = await session.execute(query)
+            try:
+                return result.scalars().all()
+            except NoResultFound:
+                return []
+
+
+class MessagesRepo(CRUD[Message]):
+    def __init__(self, session):
+        super().__init__(Message, session)
+
+    async def get_chat_history(self, sender_id, receiver_id) -> List[Message]:
+        async with self.session_factory() as session:
+            query = (
+                select(Message)
+                .options(joinedload(Message.sender))
+                .filter(
+                    (
+                        (Message.sender_id == sender_id)
+                        & (Message.receiver_id == receiver_id)
+                    )
+                    | (
+                        (Message.sender_id == receiver_id)
+                        & (Message.receiver_id == sender_id)
+                    )
+                )
+                .order_by(Message.timestamp)
+            )
             result = await session.execute(query)
             try:
                 return result.scalars().all()
@@ -85,6 +113,7 @@ class AsyncORM:
 
     # models
     users: UsersRepo
+    messages: MessagesRepo
 
     @classmethod
     def set_session_factory(cls, session_factory):
@@ -93,6 +122,7 @@ class AsyncORM:
     @classmethod
     def init_models(cls):
         cls.users = UsersRepo(cls.session_factory)
+        cls.messages = MessagesRepo(cls.session_factory)
 
     @classmethod
     async def create_tables(cls, engine):

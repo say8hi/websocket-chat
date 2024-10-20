@@ -3,7 +3,8 @@ from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from api import user_router
+from api.users import user_router
+from api.chat import chat_router
 import uvicorn
 
 from config import load_config
@@ -42,5 +43,6 @@ async def lifespan(app: FastAPI):
 if __name__ == "__main__":
     app = FastAPI(title="API Example", lifespan=lifespan)
     app.include_router(user_router)
+    app.include_router(chat_router)
 
     uvicorn.run(app, host="0.0.0.0", port=8000)

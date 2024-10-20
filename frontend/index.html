@@ -46,17 +46,30 @@
             color: white;
             cursor: pointer;
         }
-        #register-container {
+        #auth-container {
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-        #register-container input {
+        #auth-container input {
             margin: 5px;
             padding: 10px;
             width: 200px;
         }
-        #register-container button {
+        #auth-container button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #user-menu {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        #user-menu button {
+            margin: 5px;
             padding: 10px;
             background-color: #007bff;
             color: white;
@@ -66,14 +79,21 @@
     </style>
 </head>
 <body>
-    <div id="register-container">
-        <h2>Register</h2>
+    <div id="auth-container">
+        <h2 id="auth-title">Register</h2>
         <input type="text" id="username" placeholder="Username" required>
         <input type="password" id="password" placeholder="Password" required>
-        <button id="register-btn">Register</button>
+        <button id="auth-btn">Register</button>
+        <button id="login-btn">Login</button>
+    </div>
+
+    <div id="user-menu" style="display: none;">
+        <h2>Select a User to Chat With</h2>
+        <div id="user-list"></div>
     </div>
 
     <div id="chat-container">
+        <button id="backBtn">Back</button>
         <h2>Chat Room</h2>
         <div id="messages"></div>
         <form id="message-form">
@@ -82,19 +102,25 @@
         </form>
     </div>
 
-  <script>
-        const registerBtn = document.getElementById('register-btn');
+    <script>
+        const authBtn = document.getElementById('auth-btn');
+        const loginBtn = document.getElementById('login-btn');
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
-        const registerContainer = document.getElementById('register-container');
+        const authContainer = document.getElementById('auth-container');
+        const userMenu = document.getElementById('user-menu');
+        const userList = document.getElementById('user-list');
         const chatContainer = document.getElementById('chat-container');
         const messagesDiv = document.getElementById('messages');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
+        const backBtn = document.getElementById('backBtn');
 
-        let username = '';
+        let userId = null;
+        let username = null;
+        let selectedUserId = null;
 
-        registerBtn.addEventListener('click', async () => {
+        async function handleAuth(action) {
             const usernameValue = usernameInput.value;
             const passwordValue = passwordInput.value;
 
@@ -104,7 +130,8 @@
             }
 
             try {
-                const response = await fetch('api/users/register/', {
+                const endpoint = action === 'register' ? '/api/users/register/' : '/api/users/login/';
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -117,20 +144,117 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    const userId = data.data.user_id;
+                    userId = action === 'register' ? null : data.id;
+                    username = usernameInput.value;
 
-                    username = usernameValue;
-                    alert('Registration successful!');
-                    registerContainer.style.display = 'none';
-                    chatContainer.style.display = 'flex';
+                    if (action === 'register') {
+                        alert('Registration successful! Please login.');
+                    } else {
+                        alert('Login successful!');
+                    }
+
+                    usernameInput.value = '';
+                    passwordInput.value = '';
+                    loadUserList();
+                    authContainer.style.display = 'none';
+                    userMenu.style.display = 'flex';
                 } else {
-                    alert('Registration failed.');
+                    alert(action === 'register' ? 'Registration failed.' : 'Login failed.');
                 }
             } catch (error) {
-                console.error('Error during registration:', error);
-                alert('Error during registration.');
+                console.error('Error during authentication:', error);
+                alert('Error during authentication.');
             }
-        });
+        }
+
+        authBtn.addEventListener('click', () => handleAuth('register'));
+
+        loginBtn.addEventListener('click', () => handleAuth('login'))
+
+        async function loadUserList() {
+            try {
+                const response = await fetch('/api/users/');
+                if (response.ok) {
+                    const users = await response.json();
+                    userList.innerHTML = '';
+                    users.forEach(user => {
+                        if (user.id !== userId) {
+                            const userBtn = document.createElement('button');
+                            userBtn.textContent = user.username;
+                            userBtn.onclick = () => startChat(user.id);
+                            userList.appendChild(userBtn);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading user list:', error);
+            }
+        }
+
+
+        async function loadChatHistory(senderId, receiverId) {
+            try {
+                const response = await fetch(`/api/chat/history/${senderId}/${receiverId}`);
+                if (response.ok) {
+                    const messages = await response.json();
+                    messagesDiv.innerHTML = '';
+                    messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.textContent = `${message.sender.username}: ${message.message}`;
+                        messagesDiv.appendChild(messageElement);
+                    });
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+                } else {
+                    console.error('Error loading chat history.');
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function startChat(receiverId) {
+            selectedUserId = receiverId;
+            userMenu.style.display = 'none';
+            chatContainer.style.display = 'flex';
+            connectToWebSocket(userId, receiverId);
+            loadChatHistory(userId, receiverId);
+        }
+
+        let ws;
+
+        function connectToWebSocket(senderId, receiverId) {
+            const ws = new WebSocket(`ws://localhost:8000/chat/ws/${senderId}/${receiverId}`);
+
+            ws.onmessage = function(event) {
+                const message = document.createElement('div');
+                message.textContent = event.data;
+                messagesDiv.appendChild(message);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            };
+
+            messageForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const message = messageInput.value;
+
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${username}: ${message}`;
+                messagesDiv.appendChild(messageElement);
+
+                ws.send(message);
+                messageInput.value = '';
+            });
+        }
+
+        function goBack() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+            chatContainer.style.display = 'none';
+            userMenu.style.display = 'block';
+        }
+
+        backBtn.addEventListener('click', goBack);
     </script>
 </body>
 </html>
