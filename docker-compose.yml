@@ -11,8 +11,6 @@ services:
       - db
     volumes:
       - ./backend:/app
-    # expose:
-    #   - "8000"
     ports:
       - "8000:8000"
 
@@ -29,6 +27,16 @@ services:
     ports:
       - "5432:5432"
 
+  redis-cache:
+    image: redis:alpine
+    restart: always
+    container_name: redis-container
+    command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}" ]
+    env_file:
+      - '.env'
+    ports:
+      - "6379:6379"
+
   frontend:
     build:
       context: .
@@ -41,6 +49,19 @@ services:
       - app
     volumes:
       - ./frontend:/usr/share/nginx/html
+
+  celery_worker:
+    build:
+      context: ./celery
+      dockerfile: Dockerfile
+    volumes:
+      - ./celery:/app
+
+    env_file:
+      - .env
+    depends_on:
+      - redis-cache
+      - db
 
 volumes:
   postgres_data:

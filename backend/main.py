@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
 import logging
+from celery import Celery
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from api.users import user_router
@@ -9,6 +10,10 @@ import uvicorn
 
 from config import load_config
 from database.orm import AsyncORM
+
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+import redis.asyncio as aioredis
 
 
 async def setup_database(config):
@@ -34,8 +39,33 @@ async def setup_database(config):
 async def lifespan(app: FastAPI):
     config = load_config(".env")
 
+    # Initialise Database
     engine = await setup_database(config)
     await AsyncORM.create_tables(engine)
+
+    # Initialise redis
+    redis = await aioredis.from_url(
+        f"redis://:{config.redis.redis_pass}@{config.redis.redis_host}:{config.redis.redis_port}/0",
+        encoding="utf8",
+    )
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+    celery_app = Celery(
+        "chat_tasks",
+        broker=f"redis://:{config.redis.redis_pass}@{config.redis.redis_host}:{config.redis.redis_port}/1",
+        backend=f"redis://:{config.redis.redis_pass}@{config.redis.redis_host}:{config.redis.redis_port}/0",
+    )
+
+    celery_app.conf.update(
+        task_serializer="json",
+        accept_content=["json"],
+        result_serializer="json",
+        timezone="UTC",
+        enable_utc=True,
+    )
+
+    app.state.redis = redis
+    app.state.celery = celery_app
 
     yield
 

@@ -98,7 +98,7 @@
         <div id="messages"></div>
         <form id="message-form">
             <input type="text" id="message-input" placeholder="Type a message" required>
-            <button type="submit">Send</button>
+            <button id="sendBtn">Send</button>
         </form>
     </div>
 
@@ -114,6 +114,8 @@
         const messagesDiv = document.getElementById('messages');
         const messageForm = document.getElementById('message-form');
         const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('sendBtn');
+
         const backBtn = document.getElementById('backBtn');
 
         let userId = null;
@@ -217,13 +219,15 @@
             userMenu.style.display = 'none';
             chatContainer.style.display = 'flex';
             connectToWebSocket(userId, receiverId);
-            loadChatHistory(userId, receiverId);
         }
 
-        let ws;
+        let ws = null;
 
         function connectToWebSocket(senderId, receiverId) {
-            const ws = new WebSocket(`ws://localhost:8000/chat/ws/${senderId}/${receiverId}`);
+            if (ws !== null) {
+                ws.close();
+            }
+            ws = new WebSocket(`ws://localhost:8000/chat/ws/${senderId}/${receiverId}`);
 
             ws.onmessage = function(event) {
                 const message = document.createElement('div');
@@ -231,18 +235,6 @@
                 messagesDiv.appendChild(message);
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             };
-
-            messageForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const message = messageInput.value;
-
-                const messageElement = document.createElement('div');
-                messageElement.textContent = `${username}: ${message}`;
-                messagesDiv.appendChild(messageElement);
-
-                ws.send(message);
-                messageInput.value = '';
-            });
         }
 
         function goBack() {
@@ -250,11 +242,27 @@
                 ws.close();
                 ws = null;
             }
+            messagesDiv.innerHTML = '';
             chatContainer.style.display = 'none';
             userMenu.style.display = 'block';
         }
 
+        function sendMessage() {
+            const message = messageInput.value.trim();
+
+            if (message && ws && ws.readyState === WebSocket.OPEN) {
+                const messageElement = document.createElement('div');
+                messageElement.textContent = `${username}: ${message}`;
+                messagesDiv.appendChild(messageElement);
+
+                ws.send(message);
+                messageInput.value = "";
+            }
+        }
+
         backBtn.addEventListener('click', goBack);
+        sendBtn.addEventListener('click', sendMessage);
+
     </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+from operator import concat
 from typing import Generic, List, Type, TypeVar
 from sqlalchemy import desc, select
 from sqlalchemy.orm import joinedload, sessionmaker
@@ -5,6 +6,7 @@ from sqlalchemy.exc import NoResultFound
 from database.database import Base
 
 from database.models import User, Message
+from schemas.messages import CachedMessageDTO
 
 T = TypeVar("T", bound=Base)
 
@@ -84,7 +86,9 @@ class MessagesRepo(CRUD[Message]):
     def __init__(self, session):
         super().__init__(Message, session)
 
-    async def get_chat_history(self, sender_id, receiver_id) -> List[Message]:
+    async def get_chat_history(
+        self, sender_id: int, receiver_id: int, limit: int = 50, offset: int = 0
+    ) -> List[Message]:
         async with self.session_factory() as session:
             query = (
                 select(Message)
@@ -99,13 +103,28 @@ class MessagesRepo(CRUD[Message]):
                         & (Message.receiver_id == sender_id)
                     )
                 )
-                .order_by(Message.timestamp)
+                .order_by(desc(Message.timestamp))
+                .limit(limit)
+                .offset(offset)
             )
             result = await session.execute(query)
             try:
-                return result.scalars().all()
+                messages = result.scalars().all()
+                return messages[::-1]
             except NoResultFound:
                 return []
+
+    async def add_cached_messages(self, messages: List[CachedMessageDTO]):
+        async with self.session_factory() as session:
+            for message in messages:
+                obj = Message(
+                    sender_id=message.sender_id,
+                    receiver_id=message.receiver_id,
+                    message=message.message,
+                )
+                session.add(obj)
+
+            await session.commit()
 
 
 class AsyncORM:

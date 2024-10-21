@@ -18,3 +18,14 @@ class MessageInDBBaseDTO(MessageBaseDTO):
     id: int
     timestamp: datetime
     sender: UserDTO
+
+
+class CachedMessageDTO(MessageBaseDTO):
+    model_config = ConfigDict(from_attributes=True)
+    id: int | None
+    timestamp: datetime | None
+    sender: UserDTO
+
+
+class MessageDTO(MessageInDBBaseDTO):
+    pass
