@@ -21,12 +21,8 @@ class UserInDBBaseDTO(UserBaseDTO):
     model_config = ConfigDict(from_attributes=True)
     id: int
     registered_at: datetime
+    tg_user_id: int | None
 
 
 class UserDTO(UserInDBBaseDTO):
     pass
-
-
-class StatusResponse(BaseModel):
-    status: str
-    data: Optional[dict] = {}

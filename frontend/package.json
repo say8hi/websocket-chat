@@ -1,0 +1,12 @@
+{
+  "name": "frontend-chat-app",
+  "version": "1.0.0",
+  "description": "Chat application frontend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}

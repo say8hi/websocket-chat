@@ -1,0 +1,81 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    background-color: #f0f0f0;
+}
+#chat-container {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 300px;
+}
+#messages {
+    height: 200px;
+    width: 100%;
+    border: 1px solid #ccc;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    padding: 5px;
+    background-color: #fff;
+}
+#message-form {
+    display: flex;
+    width: 100%;
+}
+#message-form input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+#message-form button {
+    padding: 5px 10px;
+    border: none;
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+}
+#auth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#auth-container input {
+    margin: 5px;
+    padding: 10px;
+    width: 200px;
+}
+#auth-container button {
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+#user-menu {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}
+#user-menu button {
+    margin: 5px;
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+#connectTelegramBtn {
+    display: none;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #0088cc;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}

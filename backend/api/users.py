@@ -1,14 +1,11 @@
-import asyncio
-from fastapi import APIRouter, HTTPException
-from database.orm import AsyncORM
 from typing import List
+
+from fastapi import APIRouter, HTTPException
 from fastapi_cache.decorator import cache
 
-from schemas.users import (
-    UserBaseDTO,
-    UserDTO,
-)
-
+from database.orm import AsyncORM
+from schemas.users import UserBaseDTO, UserDTO
+from schemas.others import StatusResponse, ConnectTG
 
 user_router = APIRouter(
     prefix="/users",
@@ -49,3 +46,10 @@ async def login_user(user_data: UserBaseDTO):
         return user[0]
 
     raise HTTPException(status_code=400, detail="User not found")
+
+
+@user_router.post("/connect-tg", response_model=StatusResponse)
+async def connect_tg(user_data: ConnectTG):
+    await AsyncORM.users.update(user_data.user_id, tg_user_id=user_data.tg_user_id)
+
+    return StatusResponse(status="ok", data={"message": "successfully connected"})

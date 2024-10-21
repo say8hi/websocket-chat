@@ -1,19 +1,19 @@
 import asyncio
-from contextlib import asynccontextmanager
 import logging
+from contextlib import asynccontextmanager
+
+import redis.asyncio as aioredis
+import uvicorn
 from celery import Celery
 from fastapi import FastAPI
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from api.users import user_router
-from api.chat import chat_router
-import uvicorn
-
-from config import load_config
-from database.orm import AsyncORM
-
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-import redis.asyncio as aioredis
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+from api.chat import chat_router
+from api.users import user_router
+from config import load_config
+from database.orm import AsyncORM
 
 
 async def setup_database(config):
@@ -50,6 +50,7 @@ async def lifespan(app: FastAPI):
     )
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
+    # Initialise celery
     celery_app = Celery(
         "chat_tasks",
         broker=f"redis://:{config.redis.redis_pass}@{config.redis.redis_host}:{config.redis.redis_port}/1",

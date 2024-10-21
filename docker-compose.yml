@@ -36,19 +36,29 @@ services:
       - '.env'
     ports:
       - "6379:6379"
-
+  
   frontend:
     build:
-      context: .
-      dockerfile: ./nginx/Dockerfile
-    container_name: nginx-frontend
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react-frontend
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
     restart: always
     ports:
       - "80:80"
     depends_on:
+      - frontend
       - app
-    volumes:
-      - ./frontend:/usr/share/nginx/html
 
   celery_worker:
     build:
@@ -62,6 +72,19 @@ services:
     depends_on:
       - redis-cache
       - db
+
+  tg_bot:
+    build:
+      context: ./tg_bot
+      dockerfile: Dockerfile
+    container_name: chat-tg_bot
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./tg_bot:/app
+    ports:
+      - "8040:8040"
 
 volumes:
   postgres_data:

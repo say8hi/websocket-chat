@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="auth-container">
+        <h2 id="auth-title">Register</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button id="auth-btn">Register</button>
+        <button id="login-btn">Login</button>
+    </div>
+
+    <div id="user-menu" style="display: none;">
+        <button id="connectTelegramBtn">Connect Telegram</button>
+        <h2>Select a User to Chat With</h2>
+        <div id="user-list"></div>
+    </div>
+
+    <div id="chat-container">
+        <button id="backBtn">Back</button>
+        <h2>Chat Room</h2>
+        <div id="messages"></div>
+        <form id="message-form">
+            <input type="text" id="message-input" placeholder="Type a message" required>
+            <button id="sendBtn">Send</button>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

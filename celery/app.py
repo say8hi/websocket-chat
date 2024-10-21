@@ -1,6 +1,6 @@
 from celery import Celery
-
 from environs import Env
+from tasks import SendMessageToTG
 
 env = Env()
 env.read_env()
@@ -8,6 +8,8 @@ env.read_env()
 redis_pass = env.str("REDIS_PASSWORD")
 redis_port = env.int("REDIS_PORT")
 redis_host = env.str("REDIS_HOST")
+
+tgbot_token = env.str("BOT_TOKEN")
 
 
 celery_app = Celery(
@@ -23,3 +25,7 @@ celery_app.conf.update(
     timezone="UTC",
     enable_utc=True,
 )
+
+
+notify_tg = SendMessageToTG(tgbot_token)
+celery_app.register_task(notify_tg)

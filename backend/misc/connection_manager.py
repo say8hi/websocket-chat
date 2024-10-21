@@ -14,5 +14,8 @@ class ConnectionManager:
 
     async def send_personal_message(self, message: str, receiver_id: int):
         receiver_ws = self.active_connections.get(receiver_id)
-        if receiver_ws:
-            await receiver_ws.send_text(message)
+        if not receiver_ws:
+            return False
+
+        await receiver_ws.send_text(message)
+        return True

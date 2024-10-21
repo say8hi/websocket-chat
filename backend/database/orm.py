@@ -1,11 +1,12 @@
 from operator import concat
 from typing import Generic, List, Type, TypeVar
-from sqlalchemy import desc, select
-from sqlalchemy.orm import joinedload, sessionmaker
-from sqlalchemy.exc import NoResultFound
-from database.database import Base
 
-from database.models import User, Message
+from sqlalchemy import desc, select
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.orm import joinedload, sessionmaker
+
+from database.database import Base
+from database.models import Message, User
 from schemas.messages import CachedMessageDTO
 
 T = TypeVar("T", bound=Base)

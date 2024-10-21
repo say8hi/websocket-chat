@@ -1,14 +1,12 @@
-import logging
 from typing import List
 
-from fastapi import APIRouter, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from database.orm import AsyncORM
 from misc.connection_manager import ConnectionManager
 from schemas.messages import CachedMessageDTO, MessageDTO
 from schemas.users import UserDTO
-from utils.cache import cache_message, get_cache_key, get_cached_messages
-
+from utils.cache import cache_message, get_cached_messages
 
 manager = ConnectionManager()
 
@@ -35,8 +33,6 @@ async def websocket_chat(
     receiver_id: int,
 ):
     await manager.connect(websocket, sender_id)
-
-    logging.info(websocket.app)
 
     redis = websocket.app.state.redis
 
@@ -70,9 +66,17 @@ async def websocket_chat(
                 ),
             )
 
-            await manager.send_personal_message(
+            sent = await manager.send_personal_message(
                 f"{sender.username}: {data}", receiver_id
             )
+            if not sent:
+                celery_app = websocket.app.state.celery
+                receiver = await AsyncORM.users.get(receiver_id)
+                if receiver.tg_user_id:
+                    celery_app.send_task(
+                        "tasks.SendMessageToTG",
+                        args=[receiver.tg_user_id, sender.username, data],
+                    )
 
     except WebSocketDisconnect:
         manager.disconnect(sender_id)
