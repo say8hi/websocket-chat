@@ -1,10 +1,12 @@
 from sqlalchemy.orm import DeclarativeBase
 
 
+# Base class for SQLAlchemy models, provides custom representation for debugging
 class Base(DeclarativeBase):
     repr_cols_num = 3
     repr_cols: tuple = tuple()
 
+    # Generate a string representation of the model
     def __repr__(self):
         cols = []
         for idx, col in enumerate(self.__table__.columns.keys()):

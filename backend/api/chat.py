@@ -1,12 +1,10 @@
-from typing import List
-
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-
-from database.orm import AsyncORM
 from misc.connection_manager import ConnectionManager
-from schemas.messages import CachedMessageDTO, MessageDTO
+from schemas.messages import CachedMessageDTO
 from schemas.users import UserDTO
 from utils.cache import cache_message, get_cached_messages
+
+from database.orm import AsyncORM
 
 manager = ConnectionManager()
 
@@ -15,15 +13,6 @@ chat_router = APIRouter(
     tags=["chat"],
     responses={404: {"description": "Not found"}},
 )
-
-
-@chat_router.get("/history/{sender_id}/{receiver_id}", response_model=List[MessageDTO])
-async def get_message_history(sender_id: int, receiver_id: int):
-    messages = await AsyncORM.messages.get_chat_history(
-        sender_id=sender_id, receiver_id=receiver_id
-    )
-
-    return messages
 
 
 @chat_router.websocket("/ws/{sender_id}/{receiver_id}")
@@ -36,6 +25,7 @@ async def websocket_chat(
 
     redis = websocket.app.state.redis
 
+    # Retrieve cached messages from Redis or fetch from the database if not available
     messages = await get_cached_messages(redis, sender_id, receiver_id)
     if not messages:
         messages = await AsyncORM.messages.get_chat_history(sender_id, receiver_id)
@@ -45,6 +35,7 @@ async def websocket_chat(
                 CachedMessageDTO.model_validate(message),
             )
 
+    # Send existing messages to the connected user
     for message in messages:
         await websocket.send_text(f"{message.sender.username}: {message.message}")
 
@@ -66,9 +57,12 @@ async def websocket_chat(
                 ),
             )
 
+            # Send the message to the intended recipient
             sent = await manager.send_personal_message(
                 f"{sender.username}: {data}", receiver_id
             )
+
+            # If the recipient is not connected, send a message to their Telegram
             if not sent:
                 celery_app = websocket.app.state.celery
                 receiver = await AsyncORM.users.get(receiver_id)

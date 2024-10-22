@@ -4,6 +4,7 @@ from sqlalchemy import ForeignKey, text, BigInteger
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .database import Base
 
+# Type annotations for primary keys and timestamp columns
 intpk = Annotated[int, mapped_column(primary_key=True)]
 created_at = Annotated[
     datetime.datetime, mapped_column(server_default=text("TIMEZONE('utc', now())"))
@@ -15,7 +16,7 @@ class User(Base):
 
     id: Mapped[intpk]
     username: Mapped[str] = mapped_column(unique=True)
-    password: Mapped[str]
+    hashed_password: Mapped[str]
     tg_user_id: Mapped[int] = mapped_column(BigInteger, nullable=True)
     registered_at: Mapped[created_at]
 

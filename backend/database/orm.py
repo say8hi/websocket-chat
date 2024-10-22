@@ -1,4 +1,3 @@
-from operator import concat
 from typing import Generic, List, Type, TypeVar
 
 from sqlalchemy import desc, select
@@ -13,11 +12,16 @@ T = TypeVar("T", bound=Base)
 
 
 class CRUD(Generic[T]):
+    """
+    Generic CRUD class for common database operations
+    """
+
     def __init__(self, model: Type[T], session_factory: sessionmaker):
         self.model = model
         self.session_factory = session_factory
 
     async def create(self, **kwargs) -> T:
+        """Create a new instance of the model and add it to the database"""
         async with self.session_factory() as session:
             obj = self.model(**kwargs)
             session.add(obj)
@@ -26,6 +30,7 @@ class CRUD(Generic[T]):
             return obj
 
     async def get(self, id: int) -> T:
+        """Retrieve a single instance of the model by its ID"""
         async with self.session_factory() as session:
             query = select(self.model).filter_by(id=id)
             result = await session.execute(query)
@@ -35,6 +40,7 @@ class CRUD(Generic[T]):
                 return None
 
     async def get_all(self, **kwargs) -> List[T]:
+        """Retrieve all instances of the model that match the given filters"""
         async with self.session_factory() as session:
             query = select(self.model).filter_by(**kwargs).order_by(desc(self.model.id))
             result = await session.execute(query)
@@ -42,6 +48,7 @@ class CRUD(Generic[T]):
             return users
 
     async def update(self, id: int, **kwargs) -> T | None:
+        """Update an existing instance of the model with new values"""
         async with self.session_factory() as session:
             query = select(self.model).filter_by(id=id)
             result = await session.execute(query)
@@ -57,6 +64,7 @@ class CRUD(Generic[T]):
                 return None
 
     async def delete(self, id: int) -> bool:
+        """Delete an instance of the model by its ID"""
         async with self.session_factory() as session:
             query = select(self.model).filter_by(id=id)
             result = await session.execute(query)
@@ -70,6 +78,8 @@ class CRUD(Generic[T]):
 
 
 class UsersRepo(CRUD[User]):
+    """Repository for User model to handle user-specific operations"""
+
     def __init__(self, session):
         super().__init__(User, session)
 
@@ -84,12 +94,15 @@ class UsersRepo(CRUD[User]):
 
 
 class MessagesRepo(CRUD[Message]):
+    """Repository for Message model to handle message-specific operations"""
+
     def __init__(self, session):
         super().__init__(Message, session)
 
     async def get_chat_history(
         self, sender_id: int, receiver_id: int, limit: int = 50, offset: int = 0
     ) -> List[Message]:
+        """Retrieve chat history between two users with pagination"""
         async with self.session_factory() as session:
             query = (
                 select(Message)
@@ -116,6 +129,7 @@ class MessagesRepo(CRUD[Message]):
                 return []
 
     async def add_cached_messages(self, messages: List[CachedMessageDTO]):
+        """Add a list of cached messages to the database"""
         async with self.session_factory() as session:
             for message in messages:
                 obj = Message(
@@ -129,6 +143,8 @@ class MessagesRepo(CRUD[Message]):
 
 
 class AsyncORM:
+    """Class to manage asynchronous ORM operations and repositories"""
+
     session_factory: sessionmaker
 
     # models

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from schemas.users import UserDTO
 
@@ -22,8 +23,8 @@ class MessageInDBBaseDTO(MessageBaseDTO):
 
 class CachedMessageDTO(MessageBaseDTO):
     model_config = ConfigDict(from_attributes=True)
-    id: int | None
-    timestamp: datetime | None
+    id: Optional[int]
+    timestamp: Optional[datetime]
     sender: UserDTO
 
 

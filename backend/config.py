@@ -46,9 +46,21 @@ class Redis:
 
 
 @dataclass
+class Secrets:
+    auth: str
+
+    @staticmethod
+    def from_env(env: Env):
+        auth = env.str("AUTH_SECRET")
+
+        return Secrets(auth=auth)
+
+
+@dataclass
 class Config:
     postgres: Postgres
     redis: Redis
+    secrets: Secrets
 
 
 def load_config(path: Optional[str] = None) -> Config:
@@ -58,4 +70,5 @@ def load_config(path: Optional[str] = None) -> Config:
     return Config(
         postgres=Postgres.from_env(env),
         redis=Redis.from_env(env),
+        secrets=Secrets.from_env(env),
     )
