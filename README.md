@@ -177,7 +177,7 @@ Without proxy:
 - **Frontend**: [http://localhost:3000](http://localhost:3000)
 - **Backend API**: [http://localhost:8000](http://localhost:8000)
 
-  ### Accessing the Database
+### Accessing the Database
 
 You can connect to the PostgreSQL database using a client like pgAdmin or any SQL client using the following credentials:
 
@@ -189,6 +189,7 @@ You can connect to the PostgreSQL database using a client like pgAdmin or any SQ
 
 ### Interacting with the API
 
+Also all endpoints can be found here: [http://localhost:8000/docs](http://localhost:8000/docs)
 The backend API supports several endpoints for user management and messaging. Here are some key endpoints:
 
 #### User Registration
@@ -230,6 +231,48 @@ The backend API supports several endpoints for user management and messaging. He
             "token": "jwt token"
             "user_id": "user_id"
         }
+    }
+    ```
+#### Get all users
+
+- **Endpoint**: `GET /users/`
+- **Headers**:
+  ```json
+  {
+    "Authorization": "Bearer {jwt_token}",
+  }
+  ```
+- **Body**: 
+    ```json
+    {
+        "username": "your_username",
+        "password": "your_password"
+    }
+    ```
+- **Response**: 
+    ```json
+    {
+      [
+        {"id": 1, "username": "username"...},
+        {"id": 2, "username": "username2"...}
+      ]
+    }
+    ```
+#### Connect telegram account
+
+- **Endpoint**: `POST /users/connect-tg`
+- **Body**: 
+    ```json
+      {
+        "user_id": 0,
+        "tg_user_id": 0
+      }
+    ```
+- **Response**: 
+    ```json
+    {
+      "status": "string",
+      "data": {}
     }
     ```
 #### Websocket for live-chatting
