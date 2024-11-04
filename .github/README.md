@@ -1,4 +1,5 @@
 # Chat Application
+![Logo](./logo.jpg)
 
 This is a real-time chat application built using FastAPI for the backend and React for the frontend. The application supports WebSocket communication for real-time messaging, with PostgreSQL for data storage and Redis for caching.
 
